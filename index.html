@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>使用済紙片管理台帳</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4EFE3;
+    --ink: #1A1A1A;
+    --stamp: #B23A3A;
+    --sub: #6B6B6B;
+    --rule: #2B2B2B;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Shippori Mincho", "Noto Serif JP", "Yu Mincho", serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    background-image:
+      radial-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
+      radial-gradient(rgba(0,0,0,0.015) 1px, transparent 1px);
+    background-size: 6px 6px, 11px 11px;
+    background-position: 0 0, 3px 3px;
+  }
+
+  .sheet {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 48px 32px 80px;
+  }
+
+  header {
+    border-bottom: 3px double var(--rule);
+    padding-bottom: 20px;
+    margin-bottom: 24px;
+  }
+
+  .head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  h1 {
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    letter-spacing: 0.15em;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+    color: var(--sub);
+    letter-spacing: 0.12em;
+    margin: 0;
+  }
+
+  .doc-no {
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-size: 0.7rem;
+    color: var(--sub);
+    text-align: right;
+    line-height: 1.6;
+    letter-spacing: 0.05em;
+  }
+
+  .meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px 32px;
+    padding: 14px 16px;
+    margin-bottom: 28px;
+    border: 1px solid var(--rule);
+    background: rgba(255,255,255,0.35);
+    font-size: 0.85rem;
+  }
+
+  .meta-item {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+  }
+
+  .meta-label {
+    color: var(--sub);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  .meta-value {
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    letter-spacing: 0.05em;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    background: rgba(255,255,255,0.25);
+  }
+
+  thead th {
+    border-top: 2px solid var(--rule);
+    border-bottom: 2px solid var(--rule);
+    padding: 10px 8px;
+    font-weight: 500;
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    color: var(--ink);
+    text-align: left;
+    background: rgba(0,0,0,0.03);
+  }
+
+  tbody td {
+    border-bottom: 1px solid rgba(0,0,0,0.18);
+    padding: 11px 8px;
+    vertical-align: middle;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: 2px solid var(--rule);
+  }
+
+  tr.row-found {
+    background: rgba(178, 58, 58, 0.05);
+  }
+
+  .col-no {
+    width: 48px;
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    color: var(--sub);
+    font-size: 0.8rem;
+    text-align: right;
+    padding-right: 14px;
+  }
+
+  .col-serial {
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-size: 1.02rem;
+    letter-spacing: 0.22em;
+    font-weight: 500;
+  }
+
+  .col-date {
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-size: 0.78rem;
+    color: var(--sub);
+    width: 130px;
+    white-space: nowrap;
+  }
+
+  .col-place {
+    width: 170px;
+    white-space: nowrap;
+  }
+
+  .col-place a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--sub);
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+  }
+
+  .col-place a:hover {
+    border-bottom-color: var(--ink);
+    color: var(--stamp);
+  }
+
+  .col-status {
+    width: 110px;
+    text-align: center;
+  }
+
+  .stamp {
+    display: inline-block;
+    color: var(--stamp);
+    border: 2px solid var(--stamp);
+    border-radius: 50%;
+    padding: 5px 6px;
+    font-family: "Shippori Mincho", "Noto Serif JP", serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    transform: rotate(-8deg);
+    opacity: 0.92;
+    white-space: nowrap;
+  }
+
+  .found-date {
+    margin-top: 6px;
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-size: 0.7rem;
+    color: var(--sub);
+    letter-spacing: 0.03em;
+  }
+
+  .found-reporter {
+    margin-top: 2px;
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    font-size: 0.66rem;
+    color: var(--sub);
+    letter-spacing: 0.03em;
+  }
+
+  .col-report {
+    width: 92px;
+    text-align: center;
+  }
+
+  .btn-report {
+    display: inline-block;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    text-decoration: none;
+    font-family: inherit;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    padding: 5px 10px;
+    background: transparent;
+    white-space: nowrap;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .btn-report:hover {
+    background: var(--ink);
+    color: var(--bg);
+  }
+
+  .actions {
+    margin-top: 24px;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  button.export {
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    padding: 9px 18px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  button.export:hover {
+    background: rgba(0,0,0,0.06);
+  }
+
+  footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+    color: var(--sub);
+    font-size: 0.72rem;
+    line-height: 1.9;
+    letter-spacing: 0.04em;
+  }
+
+  footer p { margin: 0; }
+
+  .error-msg {
+    padding: 14px 16px;
+    border: 1px solid var(--stamp);
+    background: rgba(178, 58, 58, 0.08);
+    color: var(--stamp);
+    font-size: 0.85rem;
+  }
+
+  @media (max-width: 600px) {
+    .sheet { padding: 28px 16px 60px; }
+    h1 { font-size: 1.45rem; letter-spacing: 0.1em; }
+    .col-serial { font-size: 0.85rem; letter-spacing: 0.14em; }
+    .col-date { width: auto; font-size: 0.7rem; }
+    .col-place { width: auto; }
+    .col-place a { font-size: 0.7rem; letter-spacing: 0; }
+    .col-status { width: 84px; }
+    .col-report { width: 72px; }
+    .btn-report { font-size: 0.62rem; padding: 4px 6px; letter-spacing: 0.04em; }
+    .stamp { font-size: 0.55rem; padding: 3px 4px; }
+    thead th { font-size: 0.7rem; padding: 8px 4px; letter-spacing: 0.08em; }
+    tbody td { padding: 9px 4px; }
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header>
+    <div class="head-row">
+      <div>
+        <h1>使用済紙片管理台帳</h1>
+        <p class="subtitle">ケツを拭いた紙一覧</p>
+      </div>
+      <div class="doc-no">第 0001 号<br>別冊 01</div>
+    </div>
+  </header>
+
+  <section class="meta" aria-label="台帳情報">
+    <div class="meta-item">
+      <span class="meta-label">登録総数</span>
+      <span class="meta-value">123,456,789 件</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">最終更新</span>
+      <span class="meta-value" id="meta-updated">-</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">本頁件数</span>
+      <span class="meta-value">50 件</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">照合済件数</span>
+      <span class="meta-value" id="meta-found">- / 50 件</span>
+    </div>
+  </section>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="col-no">No.</th>
+        <th>記番号</th>
+        <th class="col-date">登録日時</th>
+        <th class="col-place">拭取地点</th>
+        <th class="col-status">照合状況</th>
+        <th class="col-report">報告</th>
+      </tr>
+    </thead>
+    <tbody id="registry-body"></tbody>
+  </table>
+
+  <div class="actions">
+    <button class="export" id="btn-export" type="button">台帳をエクスポート（CSV）</button>
+  </div>
+
+  <footer>
+    <p>※本台帳に登録されている英数字列はすべて自動生成されたランダム値である</p>
+    <p>※実在する如何なる物品との一致も完全な偶然による</p>
+    <p>※本サイトはフィクションであり 特定の物品・組織を指すものではない</p>
+  </footer>
+</div>
+
+<script>
+(async () => {
+  const pad2 = (n) => String(n).padStart(2, '0');
+
+  let entries = [];
+  let found = [];
+  try {
+    const [entriesRes, foundRes] = await Promise.all([
+      fetch('./entries.json', { cache: 'no-store' }),
+      fetch('./found.json', { cache: 'no-store' }).catch(() => null),
+    ]);
+    if (!entriesRes.ok) throw new Error('entries.json load failed');
+    entries = await entriesRes.json();
+    if (foundRes && foundRes.ok) {
+      try { found = await foundRes.json(); } catch (e) { found = []; }
+    }
+  } catch (err) {
+    const tbody = document.getElementById('registry-body');
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = 6;
+    td.innerHTML = '<div class="error-msg">台帳データの読み込みに失敗した 時間をおいて再度照会されたい</div>';
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  const foundMap = new Map(found.map((f) => [f.serial, f]));
+
+  // 最終更新 = 全データ中の最新日時
+  let latestDate = '';
+  for (const e of entries) if (e.date > latestDate) latestDate = e.date;
+  for (const f of found) if (f.date && f.date > latestDate) latestDate = f.date;
+  document.getElementById('meta-updated').textContent = latestDate || '-';
+  document.getElementById('meta-found').textContent = `${found.length} / ${entries.length} 件`;
+
+  const tbody = document.getElementById('registry-body');
+  const frag = document.createDocumentFragment();
+
+  entries.forEach((e, i) => {
+    const f = foundMap.get(e.serial);
+    const tr = document.createElement('tr');
+    if (f) tr.classList.add('row-found');
+
+    const tdNo = document.createElement('td');
+    tdNo.className = 'col-no';
+    tdNo.textContent = pad2(i + 1);
+    tr.appendChild(tdNo);
+
+    const tdSerial = document.createElement('td');
+    tdSerial.className = 'col-serial';
+    tdSerial.textContent = e.serial;
+    tr.appendChild(tdSerial);
+
+    const tdDate = document.createElement('td');
+    tdDate.className = 'col-date';
+    tdDate.textContent = e.date;
+    tr.appendChild(tdDate);
+
+    const tdPlace = document.createElement('td');
+    tdPlace.className = 'col-place';
+    const a = document.createElement('a');
+    const lat = Number(e.lat).toFixed(6);
+    const lng = Number(e.lng).toFixed(6);
+    a.href = `https://www.google.com/maps?q=${lat},${lng}`;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.textContent = `${lat}, ${lng}`;
+    tdPlace.appendChild(a);
+    tr.appendChild(tdPlace);
+
+    const tdStatus = document.createElement('td');
+    tdStatus.className = 'col-status';
+    if (f) {
+      const stamp = document.createElement('span');
+      stamp.className = 'stamp';
+      stamp.textContent = '発見済';
+      tdStatus.appendChild(stamp);
+      if (f.date) {
+        const d = document.createElement('div');
+        d.className = 'found-date';
+        d.textContent = String(f.date).split(' ')[0];
+        tdStatus.appendChild(d);
+      }
+      if (f.reporter) {
+        const r = document.createElement('div');
+        r.className = 'found-reporter';
+        r.textContent = f.reporter;
+        tdStatus.appendChild(r);
+      }
+    }
+    tr.appendChild(tdStatus);
+
+    const tdReport = document.createElement('td');
+    tdReport.className = 'col-report';
+    const reportLink = document.createElement('a');
+    reportLink.className = 'btn-report';
+    const tweetText = `#使用済紙片管理台帳で${e.serial}を見つけました！ ${window.location.href}`;
+    reportLink.href = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+    reportLink.target = '_blank';
+    reportLink.rel = 'noopener noreferrer';
+    reportLink.textContent = 'Xで報告';
+    tdReport.appendChild(reportLink);
+    tr.appendChild(tdReport);
+
+    frag.appendChild(tr);
+  });
+  tbody.appendChild(frag);
+
+  // CSV エクスポート
+  const escapeCSV = (v) => {
+    const s = String(v == null ? '' : v);
+    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const toCSV = () => {
+    const header = ['No.', '記番号', '登録日時', '拭取地点(緯度,経度)', '照合状況'];
+    const lines = [header.join(',')];
+    entries.forEach((e, i) => {
+      const f = foundMap.get(e.serial);
+      const status = f
+        ? `発見済 ${f.date || ''} ${f.reporter || ''}`.trim().replace(/\s+/g, ' ')
+        : '';
+      const lat = Number(e.lat).toFixed(6);
+      const lng = Number(e.lng).toFixed(6);
+      lines.push([
+        pad2(i + 1),
+        e.serial,
+        e.date,
+        `${lat},${lng}`,
+        status,
+      ].map(escapeCSV).join(','));
+    });
+    return '﻿' + lines.join('\r\n');
+  };
+
+  document.getElementById('btn-export').addEventListener('click', () => {
+    const csv = toCSV();
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const now = new Date();
+    const stamp = `${now.getFullYear()}${pad2(now.getMonth() + 1)}${pad2(now.getDate())}`;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `registry_${stamp}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
+  });
+})();
+</script>
+</body>
+</html>
